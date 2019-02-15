@@ -8,19 +8,23 @@
 
 
 glm::ivec2 GUI::dimensions;
-Shader GUI::GUIShader2D;
+Shader GUI::GUIShader2D,GUI::GUIShaderCircle;
 void GUI::initGUI(const glm::ivec2 Dimensions)
 {
   dimensions = Dimensions;
   GUIShader2D = Shader("../src/guiShader2D.vs","../src/guiShader2D.fs");
+  GUIShaderCircle = Shader("../src/guiCircleShader.vs","../src/guiCircleShader.fs");
   glm::mat4 projection = glm::ortho(0.0f,1.0f,0.0f,1.0f);
   GUIShader2D.use();
   GUIShader2D.setMat4("projection",projection);
+
+  GUIShaderCircle.use();
+  GUIShaderCircle.setMat4("projection",projection);
 }
 
 
 
-void GUI::drawQuad(glm::vec2 botLeft,glm::vec2 topRight)
+void GUI::drawQuad(glm::vec2 botLeft,glm::vec2 topRight,Shader* shader)
 {
   static uint quadVAO,quadVBO;
   if (quadVAO == 0)
@@ -61,16 +65,23 @@ void GUI::drawQuad(glm::vec2 botLeft,glm::vec2 topRight)
     b,d,1.0f,
   };
 
-  GUIShader2D.use();
-  GUIShader2D.setMat3("model",model);
+  shader->use();
+  shader->setMat3("model",model);
 
   glBindVertexArray(quadVAO);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   glBindVertexArray(0);
 }
 
+void GUI::drawQuad(const glm::vec2 p1, const glm::vec2 p2, const glm::vec2 p3 ,const glm::vec2 p4,Shader* shader)
+{
+  drawTriangle(p1,p2,p3,shader);
+  drawTriangle(p1,p3,p4,shader);
+}
 
-void GUI::drawTriangle(const glm::vec2 p1,const glm::vec2 p2, const glm::vec2 p3)
+
+
+void GUI::drawTriangle(const glm::vec2 p1,const glm::vec2 p2, const glm::vec2 p3,Shader* shader)
 {
   static uint triVAO,triVBO;
   const glm::vec2 src1(-1,-1);
@@ -116,4 +127,17 @@ void GUI::drawTriangle(const glm::vec2 p1,const glm::vec2 p2, const glm::vec2 p3
   glBindVertexArray(triVAO);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
   glBindVertexArray(0);
+}
+
+void GUI::drawCircle(const glm::vec2 origin, const double radius, const double border)
+{
+  Shader* shader = &GUIShaderCircle;
+  shader->setVec2("origin",origin);
+  shader->setFloat("radius",radius);
+  shader->setFloat("fall_off_distance",border);
+  //shader = &GUIShader2D;
+  glm::vec2 upper = origin + glm::vec2(radius+border);
+  glm::vec2 lower = origin - glm::vec2(radius+border);
+  drawQuad(lower,upper,shader);
+
 }
