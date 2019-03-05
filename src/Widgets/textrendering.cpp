@@ -18,32 +18,92 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 // GL includes
+#include "../textureloading.h"
 
 #include "../shaders.h"
 #include "../gui.h"
 
 
+const Point inside = { 0, 0 };
+const Point empty = { 9999, 9999 };
 
-//void TextRenderer::loadFont()
 
-
-void TextRenderer::init()
+Point TextRenderer::Get( Grid &g, int x, int y )
 {
-   GUIShaderText = Shader("guiTextShader.vs","guiTextShader.fs");
-   std::cout << GUI::dimensions.x << ":" << GUI::dimensions.y << "\n";
-   glm::mat4 projection = glm::ortho(0, GUI::dimensions.x, 0,  GUI::dimensions.y);
-   GUIShaderText.use();
-   GUIShaderText.setMat4("projection",projection);
+	// OPTIMIZATION: you can skip the edge check code if you make your grid
+	// have a 1-pixel gutter.
+	if ( x >= 0 && y >= 0 && x < atlasDimensions.x && y < atlasDimensions.y )
+		return g.grid[y][x];
+	else
+		return empty;
+}
 
-   std::cout << "stuff\n";
-   FT_Library ft;
-   if (FT_Init_FreeType(&ft))
-       std::cout << "ERROR::FREETYPE: Could not init FreeType Library" << std::endl;
-   FT_Face face;
-   if (FT_New_Face(ft, "../arial.ttf", 0, &face))
-          std::cout << "ERROR::FREETYPE: Failed to load font" << std::endl;
+void TextRenderer::Put( Grid &g, int x, int y, const Point &p )
+{
+	//std::cout << x << ":" << y << "\n";
+	g.grid[y][x] = p;
+}
 
-   FT_Set_Pixel_Sizes(face,0,12);
+void TextRenderer::Compare( Grid &g, Point &p, int x, int y, int offsetx, int offsety )
+{
+	Point other = Get( g, x+offsetx, y+offsety );
+	other.dx += offsetx;
+	other.dy += offsety;
+
+	if (other.DistSq() < p.DistSq())
+		p = other;
+}
+
+void TextRenderer::GenerateSDF( Grid &g )
+{
+	// Pass 0
+	for (int y=0;y<atlasDimensions.y;y++)
+	{
+		for (int x=0;x<atlasDimensions.x;x++)
+		{
+			Point p = Get( g, x, y );
+			Compare( g, p, x, y, -1,  0 );
+			Compare( g, p, x, y,  0, -1 );
+			Compare( g, p, x, y, -1, -1 );
+			Compare( g, p, x, y,  1, -1 );
+			Put( g, x, y, p );
+		}
+
+		for (int x=atlasDimensions.x-1;x>=0;x--)
+		{
+			Point p = Get( g, x, y );
+			Compare( g, p, x, y, 1, 0 );
+			Put( g, x, y, p );
+		}
+	}
+
+	// Pass 1
+	for (int y=atlasDimensions.y-1;y>=0;y--)
+	{
+		for (int x=atlasDimensions.x-1;x>=0;x--)
+		{
+			Point p = Get( g, x, y );
+			Compare( g, p, x, y,  1,  0 );
+			Compare( g, p, x, y,  0,  1 );
+			Compare( g, p, x, y, -1,  1 );
+			Compare( g, p, x, y,  1,  1 );
+			Put( g, x, y, p );
+		}
+
+		for (int x=0;x<atlasDimensions.x;x++)
+		{
+			Point p = Get( g, x, y );
+			Compare( g, p, x, y, -1, 0 );
+			Put( g, x, y, p );
+		}
+	}
+}
+
+
+
+void TextRenderer::loadTextAtlas(const FT_Face &face, int fontSize,int level)
+{
+   FT_Set_Pixel_Sizes(face,0,fontSize);
 
 
    uint w = 0;
@@ -57,53 +117,154 @@ void TextRenderer::init()
      }
 
 
-     w += face->glyph->bitmap.width;
+     w += face->glyph->bitmap.width+5;
      h = std::max(h, face->glyph->bitmap.rows);
    }
-   atlasDimensions =  glm::vec2(w,h);
+   if(level == 0 )
+   {
+     atlasDimensions =  glm::vec2(w+3,h);
+   }
+
+
+
+
+
+
+  glTexImage2D(GL_TEXTURE_2D, level, GL_RED, floor((float)atlasDimensions.x/pow(2,level)), floor((float)atlasDimensions.y/pow(2,level)), 0, GL_RED, GL_UNSIGNED_BYTE, 0);
+  int x = 0;
+
+  for(int i = 32; i < 128; i++)
+  {
+    if(FT_Load_Char(face, i, FT_LOAD_RENDER)) continue;
+    glTexSubImage2D(GL_TEXTURE_2D, level, x, 0, face->glyph->bitmap.width, face->glyph->bitmap.rows, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
+
+    Character character =
+    {
+      glm::vec2(face->glyph->bitmap.width+2, face->glyph->bitmap.rows),
+      glm::vec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+      (unsigned int)face->glyph->advance.x,(x-2)/atlasDimensions.x,
+
+    };
+    x += face->glyph->bitmap.width+5;
+
+    if(level == 0)
+    {
+      characters.insert(std::pair<char, Character>(i, character));
+      GUIShaderText.setVec2("characters[" + std::to_string(i) + "].size",character.size/atlasDimensions);
+      GUIShaderText.setVec2("characters[" + std::to_string(i) + "].bearing",character.bearing/atlasDimensions);
+      GUIShaderText.setUInt("characters[" + std::to_string(i) + "].advance",character.advance);
+      GUIShaderText.setFloat("characters[" + std::to_string(i) + "].xstart",character.xstart);
+    }
+
+
+  }
+}
+
+
+void TextRenderer::init()
+{
+   GUIShaderText = Shader("guiTextShader.vs","guiTextShader.fs");
+   std::cout << GUI::dimensions.x << ":" << GUI::dimensions.y << "\n";
+   glm::mat4 projection = glm::ortho(0, GUI::dimensions.x, 0,  GUI::dimensions.y);
+   GUIShaderText.use();
+   GUIShaderText.setMat4("projection",projection);
+
+   FT_Library ft;
+   if (FT_Init_FreeType(&ft))
+       std::cout << "ERROR::FREETYPE: Could not init FreeType Library" << std::endl;
+   FT_Face face;
+   if (FT_New_Face(ft, "../arial.ttf", 0, &face))
+          std::cout << "ERROR::FREETYPE: Failed to load font" << std::endl;
+
 
    std::cout << atlasWidth << ":" <<atlastHeight << "\n";
    glActiveTexture(GL_TEXTURE0);
    glGenTextures(1,&textAtlas);
    glBindTexture(GL_TEXTURE_2D, textAtlas);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+
+
+   //glGenerateMipmap(GL_TEXTURE_2D);
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
    glGenVertexArrays(1, &VAO);
    glGenBuffers(1, &VBO);
-   unsigned char arr[w*h];
-   for(int i=0;i<w*h;i++)
+
+
+   loadTextAtlas(face,32,0);
+   //loadTextAtlas(face,32,1);
+   //loadTextAtlas(face,16,2);
+   //loadTextAtlas(face,8,3);
+
+	 std::cout <<"dims:" << atlasDimensions.x << ":" << atlasDimensions.y << "\n";
+
+   unsigned char image[int((atlasDimensions.x)*atlasDimensions.y)];
+
+
+   glGetTexImage(GL_TEXTURE_2D,0,GL_RED,GL_UNSIGNED_BYTE,image);
+   saveTexture("atlas.bmp",atlasDimensions.x,atlasDimensions.y,image);
+   Grid Grid1(atlasDimensions.y,atlasDimensions.x);
+   Grid Grid2(atlasDimensions.y,atlasDimensions.x);
+
+
+
+   for( int y=0;y<atlasDimensions.y;y++ )
    {
-     arr[i] = rand()%255;
-   }
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, w, h, 0, GL_RED, GL_UNSIGNED_BYTE, 0);
-
-
-   int x = 0;
-
-   for(int i = 32; i < 128; i++)
-   {
-     if(FT_Load_Char(face, i, FT_LOAD_RENDER)) continue;
-     glTexSubImage2D(GL_TEXTURE_2D, 0, x, 0, face->glyph->bitmap.width, face->glyph->bitmap.rows, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
-
-     Character character =
+     for ( int x=0;x<atlasDimensions.x;x++ )
      {
-       glm::vec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
-       glm::vec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-       (unsigned int)face->glyph->advance.x,x/atlasDimensions.x,
+       unsigned char val = image[int(x+y*atlasDimensions.x)];
+       //std::cout << (int)val << "\n";
+       if(val < 128)
+       {
+ 				Put( Grid1, x, y, inside );
+ 				Put( Grid2, x, y, empty );
+ 			} else {
+ 				Put( Grid2, x, y, inside );
+ 				Put( Grid1, x, y, empty );
+ 			}
+      //std::cout << Get(Grid1,x,y).dx << "," <<Get(Grid1,x,y).dy << ":" << Get(Grid2,x,y).dx << "," << Get(Grid1,x,y).dy << "\n";;
+    }
+  }
+   GenerateSDF(Grid1);
+   GenerateSDF(Grid2);
+   int maxDistance = -99;
+   int minDistance = 99;
 
-     };
-     x += face->glyph->bitmap.width;
-     characters.insert(std::pair<char, Character>(i, character));
-     GUIShaderText.setVec2("characters[" + std::to_string(i) + "].size",character.size/atlasDimensions);
-     GUIShaderText.setVec2("characters[" + std::to_string(i) + "].bearing",character.bearing/atlasDimensions);
-     GUIShaderText.setUInt("characters[" + std::to_string(i) + "].advance",character.advance);
-     GUIShaderText.setFloat("characters[" + std::to_string(i) + "].xstart",character.xstart);
+   for( int y=0;y<atlasDimensions.y;y++ )
+   {
+     for ( int x=0;x<atlasDimensions.x;x++ )
+     {
+     int dist1 = (int)( sqrt( (double)Get( Grid1, x, y ).DistSq() ) );
+     int dist2 = (int)( sqrt( (double)Get( Grid2, x, y ).DistSq() ) );
+     int dist = dist1 - dist2;
 
+          int c = (dist+11)*21;
+          maxDistance = std::max(dist,maxDistance);
+          minDistance =std::min(dist,minDistance);
+          if ( c < 0 ) c = 0;
+          if ( c > 255 ) c = 255;
+
+    image[int(x+y*atlasDimensions.x)]=c;
+    }
+  }
+
+    //std::cout << maxDistance<< ":" << minDistance <<"\n";
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, atlasDimensions.x,atlasDimensions.y, 0, GL_RED, GL_UNSIGNED_BYTE, image);
+
+   glGenerateMipmap(GL_TEXTURE_2D);
+   saveTexture("signedDistanceField.bmp",atlasDimensions.x+3,atlasDimensions.y,image);
+   for(int y = 0;y<atlasDimensions.y;y++)
+   {
+     for(int x=0; x<atlasDimensions.x/4;x++)
+     {
+       //std::cout << signedDistanceField[int(x+y*(atlasDimensions.x+1))]<< ',';
+     }
+     //std::cout << "\n";
    }
 
-   std::cout << textAtlas;
    glBindTexture(GL_TEXTURE_2D,0);
+
    glBindVertexArray(VAO);
    glBindBuffer(GL_ARRAY_BUFFER,VBO);
    glBufferData(GL_ARRAY_BUFFER,characterVertices.size()*sizeof(float)*6*4,&(characterVertices.front()), GL_DYNAMIC_DRAW);
@@ -214,26 +375,18 @@ glm::vec3 TextRenderer::calculateStringDimensions(const std::string& line,double
   return glm::vec3(horizontalLength,offY,maxY);
 }
 
-/*
-std::vector<std::string> GUI::splitString(const std::string& line, double scale, double width)
+void TextRenderer::updateTextBuffer(float newBuf)
 {
-  uint horizontalLength = 0;
-  uint stringStart = 0;
-  uint stringEnd = 0;
-  std::vector<std::string> stringList;
-  for(auto itr = line.begin();itr!=line.end();itr++)
-  {
-    Character c = characters[*itr];
-    std::cout << (*itr) << "is: " << (c.advance>>6) << "\n";
-    horizontalLength += (c.advance>>6) * scale;
-    if(horizontalLength/dimensions.x > width)
-    {
-      stringList.push_back(line.substr(stringStart,stringEnd))
-      stringStart = stringEnd;
-    }
-    stringEnd++;
-    return stringList;
-  }
+  if(newBuf > 1.0f) textBuffer = 1.0f;
+  else if(newBuf < 0.0f) textBuffer = 0.0f;
+  else textBuffer = newBuf;
 
+  GUIShaderText.setFloat("buf",textBuffer);
 }
-*/
+void TextRenderer::updateTextGamma(float newGamma)
+{
+  if(newGamma > 1.0f) textGamma = 1.0f;
+  else if(newGamma < 0.0f) textGamma = 0.0f;
+  else textGamma = newGamma;
+  GUIShaderText.setFloat("gamma",textGamma);
+}

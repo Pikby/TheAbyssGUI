@@ -220,14 +220,12 @@ void GUI::drawCircle(const glm::vec2 origin, const double radius, const double b
   float max_distance = pow(border+radius,2);
   float fall_off_distance = border*border;
   float borderFloat = sqrt(pow(radius+border,2)/radius_squared);
-  //std::cout << "borderFloat:  " << borderFloat <<"\n";
 
   Shader* shader = &GUIShaderCircle;
   shader->setVec2("origin",origin);
   shader->setVec2("radius_squared",glm::vec2(radius_squared));
   shader->setVec2("max_distance",glm::vec2(max_distance));
   shader->setFloat("border_float",borderFloat);
-  //shader->setFloat("max_distance",max_distance);
   glm::vec2 upper = origin + glm::vec2(radius+border);
   glm::vec2 lower = origin - glm::vec2(radius+border);
   drawQuad(lower,upper,glm::vec4(1),shader);
@@ -236,6 +234,31 @@ void GUI::drawCircle(const glm::vec2 origin, const double radius, const double b
 
 void GUI::GLFWKeyCallBack(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
+  static float gamma = 0.2;
+  static float buffer = 0.9;
+  if(key == GLFW_KEY_UP)
+  {
+    gamma += 0.001;
+    textRenderer.updateTextGamma(gamma);
+  }
+  if(key == GLFW_KEY_DOWN)
+  {
+    gamma -= 0.001;
+    textRenderer.updateTextGamma(gamma);
+  }
+  if(key == GLFW_KEY_LEFT)
+  {
+    buffer += 0.001;
+    textRenderer.updateTextBuffer(buffer);
+  }
+  if(key == GLFW_KEY_RIGHT)
+  {
+    buffer -= 0.001;
+    textRenderer.updateTextBuffer(buffer);
+  }
+
+
+  std::cout << buffer << ":" << gamma << "\n";
   if(focusTarget == NULL) return;
   focusTarget->handleKeyInput(key,action);
 }
@@ -274,7 +297,6 @@ void GUI::GLFWMouseButtonCallback(GLFWwindow* window, int button,int action, int
     {
       if(widget->isFocusable())
       {
-        std::cout << "focusing\n";
         if(focusTarget != NULL)
         {
           focusTarget->setFocused(false);

@@ -66,7 +66,7 @@ int main()
   chatBox->addLineToHistory("Line4");
 	chatBox->addLineToHistory("Line5");
 	chatBox->addLineToHistory("Line6");
-  StaticLabel* label = new StaticLabel("Static Drawing test",glm::vec2(0.5,0.5),1);
+  StaticLabel* label = new StaticLabel("The quick brown fox jumps over the lazy dog",glm::vec2(0.3,0.5),1);
 	GUI::addWidget(chatBox);
 	GUI::addToViewableList(chatBox);
 	GUI::addWidget(chatBox2);
@@ -100,7 +100,15 @@ int main()
       //labelArr[i].draw();
     }
 
-    GUI::renderText("Dynamic drawing test",glm::vec2(0.1),1,glm::vec4(0.1,0.1,0.9,1));
+
+    const double vals[] = {0.1,0.25,0.5,0.8,1.0,1.2,1.5,1.8,2.0,3.0,4.0};
+    for(int i=0;i<10;+i++)
+    {
+      GUI::renderText("The quick brown fox jumps over the lazy dog123456789"+std::to_string(vals[i]),glm::vec2(0.3,i*0.1),vals[i],glm::vec4(0.1,0.1,0.9,1));
+    }
+
+
+
 
 		GUI::drawGUI();
     //GUI::drawImage(glm::vec2(0.5,0.5),glm::vec2(1,1),1);

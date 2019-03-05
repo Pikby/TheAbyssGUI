@@ -65,9 +65,7 @@ void ChatBox::addLineToHistory(std::string line)
 void ChatBox::handleCharInput(uint character)
 {
   extendFor(5);
-  std::cout << GUI::calculateStringDimensions(currentLine,characterScale).x/GUI::dimensions.x << "\n";
   double lineSize = GUI::calculateStringDimensions(currentLine+(char)character,characterScale).x/GUI::dimensions.x;
-  std::cout << lineSize << ":" << dimensions.x << "\n";
   if(lineSize > dimensions.x ) return;
   currentLine += char(character);
 

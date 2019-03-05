@@ -20,15 +20,14 @@ public:
   {
     glm::vec2 bottomLeft = origin-glm::vec2(padding);
     glm::vec2 topRight = origin+dimensions+glm::vec2(padding);
-    //std::cout << topRight.x << ',' <<  topRight.y << ':' << bottomLeft.x << ',' << bottomLeft.y << "\n";
     bool horzIn = pos.x > bottomLeft.x && pos.x < topRight.x;
     bool vertIn = pos.y > bottomLeft.y && pos.y < topRight.y;
-    //std::cout << horzIn << ":" << vertIn << "\n";
     return horzIn && vertIn;
   }
   virtual bool isFocusable(){return focusable;}
   virtual void setFocused(bool b){focused = b;}
   virtual void draw(){};
+  virtual void handleClick(){};
   virtual void handleKeyInput(int key,int action){}
   virtual void handleCharInput(uint character){}
   virtual void handleScrollInput(double xoffset,double yoffset){}
@@ -45,11 +44,18 @@ private:
   glm::mat4 model;
 public:
   StaticLabel(){};
-  ~StaticLabel();
   StaticLabel(const std::string& text,const glm::vec2& Origin,double CharacterScale);
+  ~StaticLabel();
   void draw();
 };
 
+class Button : public Widget
+{
+private:
+  std::string text;
+
+
+};
 
 class ChatBox : public Widget
 {

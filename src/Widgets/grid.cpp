@@ -31,7 +31,6 @@ bool ImageGrid::isIn(const glm::vec2 pos)
 {
   glm::vec2 bottomLeft = origin+glm::vec2(0,cellDimensions.y+cellOffset.y+dimensions.y);
   glm::vec2 topRight = origin+glm::vec2(-cellOffset.x+dimensions.x,cellDimensions.y);
-  //std::cout << topRight.x << ',' <<  topRight.y << ':' << bottomLeft.x << ',' << bottomLeft.y << "\n";
   bool horzIn = pos.x > bottomLeft.x && pos.x < topRight.x;
   bool vertIn = pos.y > bottomLeft.y && pos.y < topRight.y;
   return horzIn && vertIn;
@@ -50,6 +49,7 @@ void ImageGrid::handleMouseHover(const glm::vec2 &mousePos)
       std::cout << horzIn << ":" << vertIn << "\n";
       if(horzIn && vertIn)
       {
+        std::cout << "Rendering\n";
         GUI::renderText(std::to_string(x+y*columns),mousePos+glm::vec2(0.01));
       }
     }
