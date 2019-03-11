@@ -10,13 +10,10 @@ struct Character
     vec2 bearing;  // Offset from baseline to left/top of glyph
     uint advance;    // Horizontal offset to advance to next glyph
     float xstart;
+    float ystart;
 };
 uniform Character characters[128];
 
-
-uniform int string[300];
-uniform mat3 modelArr[50];
-uniform int currentCharacter;
 void main()
 {
   int a = floatBitsToInt(vertex.z);
@@ -30,12 +27,11 @@ void main()
 
   Character character = characters[c];
 
-  //mat3 model = modelArr[gl_InstanceID];
   gl_Position =  projection*vec4(vertex.xy, 0, 1.0);
 
 
   float x = character.xstart + tex.x*(character.size.x);
-  float y = (tex.y)*character.size.y;
+  float y = character.ystart + tex.y*(character.size.y);
 
   TexCoords = vec2(x,y);
 }

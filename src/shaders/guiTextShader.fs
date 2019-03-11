@@ -11,12 +11,26 @@ uniform float gamma;
 
 void main()
 {
+
+
+  //float buf = 0.7;
+  //float gamma = 0.5;
   float dist = texture(text, TexCoords).r;
   //float alpha = smoothstep(200.0f/255.0f,1,dist);
   float alpha = smoothstep(buf-gamma,buf+gamma,dist);
+  //0.700003:0.526997
 
-  alpha = round(alpha);
-  vec4 sampled = vec4(outColor.rgb, outColor.a*alpha);
+
+  vec4 sampled;
+  if(alpha > 0.7)
+  {
+    sampled = vec4(outColor.rgb, outColor.a);
+  }
+  else if(alpha > 0.6)
+  {
+    //sampled = vec4(vec3(0),outColor.a);
+  }
+  else sampled = vec4(0);
   color = sampled;
 
 }

@@ -46,10 +46,10 @@ void ImageGrid::handleMouseHover(const glm::vec2 &mousePos)
       glm::vec2 tr = origin + cellDimensions+ pos*(cellDimensions+cellOffset);
       bool horzIn = mousePos.x > bl.x && mousePos.x < tr.x;
       bool vertIn = mousePos.y > bl.y && mousePos.y < tr.y;
-      std::cout << horzIn << ":" << vertIn << "\n";
+      //std::cout << horzIn << ":" << vertIn << "\n";
       if(horzIn && vertIn)
       {
-        std::cout << "Rendering\n";
+        //std::cout << "Rendering\n";
         GUI::renderText(std::to_string(x+y*columns),mousePos+glm::vec2(0.01));
       }
     }

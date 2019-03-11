@@ -101,11 +101,12 @@ int main()
     }
 
 
-    const double vals[] = {0.1,0.25,0.5,0.8,1.0,1.2,1.5,1.8,2.0,3.0,4.0};
+    const double vals[] = {0.1,0.1,0.2,0.3,0.4,0.5,1.0,2.0,3.0,4.0};
     for(int i=0;i<10;+i++)
     {
-      GUI::renderText("The quick brown fox jumps over the lazy dog123456789"+std::to_string(vals[i]),glm::vec2(0.3,i*0.1),vals[i],glm::vec4(0.1,0.1,0.9,1));
+      GUI::renderText("The quick brown fox jumps over the lazy dog123456789"+std::to_string(vals[i]),glm::vec2(0.3,i*0.1),vals[i],glm::vec4(1));
     }
+
 
 
 

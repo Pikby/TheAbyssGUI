@@ -105,6 +105,8 @@ void TextRenderer::loadTextAtlas(const FT_Face &face, int fontSize,int level)
 {
    FT_Set_Pixel_Sizes(face,0,fontSize);
 
+	 int glyphSize = fontSize + fontSize/4;
+
 
    uint w = 0;
    uint h = 0;
@@ -125,27 +127,34 @@ void TextRenderer::loadTextAtlas(const FT_Face &face, int fontSize,int level)
      atlasDimensions =  glm::vec2(w+3,h);
    }
 
+	 atlasDimensions =  13.0f*glm::vec2(glyphSize);
 
 
+ 	char zeroImage[int(atlasDimensions.x*atlasDimensions.y)];
+  memset(zeroImage,0,atlasDimensions.x*atlasDimensions.y);
 
-
-
-  glTexImage2D(GL_TEXTURE_2D, level, GL_RED, floor((float)atlasDimensions.x/pow(2,level)), floor((float)atlasDimensions.y/pow(2,level)), 0, GL_RED, GL_UNSIGNED_BYTE, 0);
-  int x = 0;
-
+  glTexImage2D(GL_TEXTURE_2D, level, GL_RED, atlasDimensions.x, atlasDimensions.y, 0, GL_RED, GL_UNSIGNED_BYTE, zeroImage);
+  int x = fontSize;
+	int y = fontSize;
   for(int i = 32; i < 128; i++)
   {
     if(FT_Load_Char(face, i, FT_LOAD_RENDER)) continue;
-    glTexSubImage2D(GL_TEXTURE_2D, level, x, 0, face->glyph->bitmap.width, face->glyph->bitmap.rows, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
+    glTexSubImage2D(GL_TEXTURE_2D, level, x, y, face->glyph->bitmap.width, face->glyph->bitmap.rows, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
 
+		int padding = glyphSize/3;
     Character character =
     {
-      glm::vec2(face->glyph->bitmap.width+2, face->glyph->bitmap.rows),
+      glm::vec2(face->glyph->bitmap.width+padding, face->glyph->bitmap.rows+padding),
       glm::vec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-      (unsigned int)face->glyph->advance.x,(x-2)/atlasDimensions.x,
+      (unsigned int)face->glyph->advance.x,(x-padding/2)/atlasDimensions.x,(y-padding/2)/atlasDimensions.y
 
     };
-    x += face->glyph->bitmap.width+5;
+    x += glyphSize;
+		if(x>= atlasDimensions.x)
+		{
+			x = glyphSize;
+			y += glyphSize;
+		}
 
     if(level == 0)
     {
@@ -154,6 +163,8 @@ void TextRenderer::loadTextAtlas(const FT_Face &face, int fontSize,int level)
       GUIShaderText.setVec2("characters[" + std::to_string(i) + "].bearing",character.bearing/atlasDimensions);
       GUIShaderText.setUInt("characters[" + std::to_string(i) + "].advance",character.advance);
       GUIShaderText.setFloat("characters[" + std::to_string(i) + "].xstart",character.xstart);
+			GUIShaderText.setFloat("characters[" + std::to_string(i) + "].ystart",character.ystart);
+
     }
 
 
@@ -182,17 +193,17 @@ void TextRenderer::init()
    glGenTextures(1,&textAtlas);
    glBindTexture(GL_TEXTURE_2D, textAtlas);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 
 
-   //glGenerateMipmap(GL_TEXTURE_2D);
+   glGenerateMipmap(GL_TEXTURE_2D);
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
    glGenVertexArrays(1, &VAO);
    glGenBuffers(1, &VBO);
 
 
-   loadTextAtlas(face,32,0);
+   loadTextAtlas(face,64,0);
    //loadTextAtlas(face,32,1);
    //loadTextAtlas(face,16,2);
    //loadTextAtlas(face,8,3);
@@ -249,11 +260,28 @@ void TextRenderer::init()
     }
   }
 
+
+
+	int factor = 4;
+
+	unsigned char newImage[int(atlasDimensions.x/factor*atlasDimensions.y/factor)];
+	for(int x = 0;x<atlasDimensions.x/factor;x++ )
+	{
+		for(int y = 0;y<atlasDimensions.y/factor;y++)
+		{
+			int total = image[int((x)*factor+(y)*factor*atlasDimensions.x)] +image[int((x+1)*factor+(y)*factor*atlasDimensions.x)]
+								+ image[int((x)*factor+(y+1)*factor*atlasDimensions.x)] +image[int((x+1)*factor+(y+1)*factor*atlasDimensions.x)];
+
+			newImage[int(x+y*atlasDimensions.x/factor)] = total/4;
+		}
+	}
+
+
     //std::cout << maxDistance<< ":" << minDistance <<"\n";
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, atlasDimensions.x,atlasDimensions.y, 0, GL_RED, GL_UNSIGNED_BYTE, image);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, atlasDimensions.x/factor,atlasDimensions.y/factor, 0, GL_RED, GL_UNSIGNED_BYTE, newImage);
 
    glGenerateMipmap(GL_TEXTURE_2D);
-   saveTexture("signedDistanceField.bmp",atlasDimensions.x+3,atlasDimensions.y,image);
+   saveTexture("signedDistanceFieldsmall.bmp",atlasDimensions.x/factor,atlasDimensions.y/factor,newImage);
    for(int y = 0;y<atlasDimensions.y;y++)
    {
      for(int x=0; x<atlasDimensions.x/4;x++)

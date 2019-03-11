@@ -9,6 +9,7 @@ struct Character {
     glm::vec2 bearing;  // Offset from baseline to left/top of glyph
     uint advance;    // Horizontal offset to advance to next glyph
     float xstart;
+    float ystart;
 };
 
 
