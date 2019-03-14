@@ -58,7 +58,7 @@ int main()
 	//glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
 
-	ChatBox* chatBox = new ChatBox(glm::vec2(0.1,0.1),glm::vec2(0.2,0.2),1);
+	ChatBox* chatBox = new ChatBox(glm::vec2(0.1,0.1),glm::vec2(0.2,0.2),12.0/64.0);
 	ChatBox* chatBox2 = new ChatBox(glm::vec2(0.6,0.1),glm::vec2(0.2,0.2),1);
 	chatBox->addLineToHistory("Line1");
   chatBox->addLineToHistory("Line2");
@@ -70,7 +70,28 @@ int main()
 	GUI::addWidget(chatBox);
 	GUI::addToViewableList(chatBox);
 	GUI::addWidget(chatBox2);
-	GUI::addToViewableList(chatBox2);
+
+  auto testButton = [&](int a)
+  {
+    static bool visible = true;
+    static std::list<Widget*>::iterator itr;
+    if(visible)
+    {
+      itr = GUI::addToViewableList(chatBox2);
+      visible = false;
+    }
+    else
+    {
+      GUI::removeFromViewableList(itr);
+      visible = true;
+    }
+  };
+  Button* button = new Button(glm::vec2(0.5,0.5),glm::vec2(0.1),"Test Button",testButton);
+
+  GUI::addWidget(button);
+  GUI::addToViewableList(button);
+
+
 
 
   ImageGrid* grid = new ImageGrid(glm::vec2(0,0.5),3,5,glm::vec2(0.05,0.05),glm::vec2(0.01,0.01));
@@ -94,7 +115,7 @@ int main()
 		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 		//GUI::drawCircle(glm::vec2(0.5,0.5),0.1,0.0);
 		//GUI::drawCircle(glm::vec2(0.3,0.3),0.1,0.0);
-    for(int i =0;i<100;i++)
+    for(int i =0;i<1000;i++)
     {
       //GUI::renderText("Dynamic drawing test",glm::vec2((rand() %1000)/1000.f,(rand() %1000)/1000.f),1,glm::vec4(1));
       //labelArr[i].draw();
@@ -104,37 +125,24 @@ int main()
     const double vals[] = {0.1,0.1,0.2,0.3,0.4,0.5,1.0,2.0,3.0,4.0};
     for(int i=0;i<10;+i++)
     {
-      GUI::renderText("The quick brown fox jumps over the lazy dog123456789"+std::to_string(vals[i]),glm::vec2(0.3,i*0.1),vals[i],glm::vec4(1));
+      // /GUI::renderText("The quick brown fox jumps over the lazy dog123456789"+std::to_string(vals[i]),glm::vec2(0.3,i*0.1),vals[i],glm::vec4(1));
     }
-
-
-
-
-
 		GUI::drawGUI();
-    //GUI::drawImage(glm::vec2(0.5,0.5),glm::vec2(1,1),1);
+    GUI::textRenderer.drawAllText();
+
+    double end = glfwGetTime();
+
+    GUI::renderText("FPS: " + std::to_string(1.0f/(end-start)),glm::vec2(0.1,0.95),24.0/64.0,glm::vec4(glm::vec3(0),1));
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,1);
 
-    //GUI::drawQuad(glm::vec2(0.05),glm::vec2(0.1),glm::vec4(0.2));
-    //GUI::drawQuad(glm::vec2(0.05),glm::vec2(0.1),glm::vec4(1),&GUI::GUIShaderText);
-
-
-
-    /*
-    for(int i=0;i<10;i++)
-    {
-      GUI::renderText("Hour long ear destroying paragraph that should take up like most of the screen",glm::vec2((rand() %1000)/1000.f,(rand() %1000)/1000.f),1,glm::vec4(1));
-    }
-    */
-    GUI::textRenderer.drawAllText();
-
-		//GUI::drawEllips(glm::vec2(0.1,0.9),0.1,0.2,0.05);
-		//GUI::drawQuad(glm::vec2(0.5,0.5),glm::vec2(1.0,1.0),glm::vec2(0.9,0.5),glm::vec2(0.5,0.2));
-		//GUI::drawTriangle(glm::vec2(0.5,0.5),glm::vec2(1,1),glm::vec2(0.9f,0.5f));
-
+    GUI::drawQuad(glm::vec2(0.1,0.8),glm::vec2(0.2,0.9),glm::vec4(1),DEFAULTQUAD);
+    GUI::drawQuad(glm::vec2(0.3,0.8),glm::vec2(0.4,0.9),glm::vec4(1),ROUNDEDQUAD);
+    GUI::drawQuad(glm::vec2(0.5,0.8),glm::vec2(0.6,0.9),glm::vec4(1),INVERTEDQUAD);
+    GUI::drawQuad(glm::vec2(0.7,0.8),glm::vec2(0.8,0.9),glm::vec4(1),CIRCLEQUAD);
 		glfwSwapBuffers(window);
-    double end = glfwGetTime();
+
     //std::cout << (end-start)*1000 << "ms\n";
 	}
 	GUI::freeGUI();

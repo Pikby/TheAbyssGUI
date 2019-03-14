@@ -14,7 +14,7 @@ struct Character {
 
 
 
-
+//Contains the 6 vertices that create the letter
 struct CharacterVertex
 {
   glm::vec4 vertices[6];
@@ -22,7 +22,7 @@ struct CharacterVertex
 struct Point
 {
 	int dx, dy;
-	int DistSq() const { return dx*dx + dy*dy; }
+	int distSq() const { return dx*dx + dy*dy; }
 };
 
 struct Grid
@@ -58,41 +58,20 @@ private:
   glm::vec2 atlasDimensions;
   std::map<char, Character> characters;
   std::vector<CharacterVertex> characterVertices;
-  Point Get( Grid &g, int x, int y );
-  void Put( Grid &g, int x, int y, const Point &p );
-  void Compare( Grid &g, Point &p, int x, int y, int offsetx, int offsety );
-  void GenerateSDF( Grid &g );
+
+  //Functions and code from http://www.codersnotes.com/notes/signed-distance-fields/
+  //After creating the atlas for the glyphs call genereateSDF to create the grid
+  Point get( Grid &g, int x, int y );
+  void put( Grid &g, int x, int y, const Point &p );
+  void compare( Grid &g, Point &p, int x, int y, int offsetx, int offsety );
+  void generateSDF( Grid &g );
 public:
   Shader GUIShaderText;
   void init();
   void drawAllText();
   void updateTextBuffer(float newBuf);
   void updateTextGamma(float newGamma);
-  void loadTextAtlas(const FT_Face &face, int fontSize,int level);
+  void loadTextAtlas(const FT_Face &face, int fontSize);
   void renderText(std::string text, glm::vec2 screenPos, GLfloat scale, glm::vec4 color);
   glm::vec3 calculateStringDimensions(const std::string& line,double scale);
-  }
-;
-/*
-std::vector<std::string> GUI::splitString(const std::string& line, double scale, double width)
-{
-  uint horizontalLength = 0;
-  uint stringStart = 0;
-  uint stringEnd = 0;
-  std::vector<std::string> stringList;
-  for(auto itr = line.begin();itr!=line.end();itr++)
-  {
-    Character c = characters[*itr];
-    std::cout << (*itr) << "is: " << (c.advance>>6) << "\n";
-    horizontalLength += (c.advance>>6) * scale;
-    if(horizontalLength/dimensions.x > width)
-    {
-      stringList.push_back(line.substr(stringStart,stringEnd))
-      stringStart = stringEnd;
-    }
-    stringEnd++;
-    return stringList;
-  }
-
-}
-*/
+};

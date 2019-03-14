@@ -12,7 +12,7 @@ class Shader;
 
 class Widget;
 
-
+enum QuadDrawType {DEFAULTQUAD = 0,ROUNDEDQUAD = 1,INVERTEDQUAD = 2, CIRCLEQUAD = 3};
 
 class GUI
 {
@@ -25,7 +25,8 @@ private:
 
 public:
   static TextRenderer textRenderer;
-  static void addToViewableList(Widget* widget){viewableList.push_back(widget);}
+  static void removeFromViewableList(std::list<Widget*>::iterator itr){viewableList.erase(itr);}
+  static std::list<Widget*>::iterator addToViewableList(Widget* widget){viewableList.push_back(widget); return (--viewableList.end());}
   static glm::ivec2 dimensions;
   static void renderText(std::string text, glm::vec2 pos, float scale=1, glm::vec4 color=glm::vec4(1)){textRenderer.renderText(text,pos,scale,color);}
   static glm::vec3 calculateStringDimensions(const std::string &line, double scale){return textRenderer.calculateStringDimensions(line,scale);}
@@ -33,17 +34,18 @@ public:
   static void freeGUI();
   static void initQuadVAO();
 
-  static glm::mat3 calculateQuadModel(const glm::vec2 botLeft, const glm::vec2 topRight);
-  static void drawImage(const glm::vec2 botLeft, const glm::vec2 topRight, const uint id);
+  static glm::mat3 calculateQuadModel(const glm::vec2& botLeft, const glm::vec2& topRight);
+  static void drawImage(const glm::vec2& botLeft, const glm::vec2& topRight, const uint id);
   static void drawImage(const glm::mat3& model, const uint id);
 
   static void drawInstancedQuads(int count);
-  static void drawQuad(const glm::mat3&  model,const glm::vec4 color, Shader* shader = &GUIShader2D);
-  static void drawQuad(const glm::vec2 botLeft,const glm::vec2 topRight,const glm::vec4 color, Shader* shader = &GUIShader2D);
-  static void drawQuad(const glm::vec2 p1,const glm::vec2 p2, const glm::vec2 p3, const glm::vec2 p4,Shader* shader = &GUIShader2D);
-  static void drawTriangle(const glm::vec2 p1,const glm::vec2 p2,const glm::vec2 p3, Shader* shader = &GUIShader2D);
-  static void drawCircle(const glm::vec2 origin, const double radius, const double border);
-  static void drawEllipse(const glm::vec2 origin, const double radiusx, const double radiusy,const double border);
+
+  static void drawQuad(const glm::mat3&  model,const glm::vec4& color,QuadDrawType type = DEFAULTQUAD, Shader* shader = &GUIShader2D);
+  static void drawQuad(const glm::vec2& botLeft,const glm::vec2& topRight,const glm::vec4& color =glm::vec4(1) ,QuadDrawType type = DEFAULTQUAD, Shader* shader = &GUIShader2D);
+  static void drawQuad(const glm::vec2& p1,const glm::vec2& p2, const glm::vec2& p3, const glm::vec2& p4,QuadDrawType type = DEFAULTQUAD,Shader* shader = &GUIShader2D);
+  static void drawTriangle(const glm::vec2& p1,const glm::vec2& p2,const glm::vec2& p3, Shader* shader = &GUIShader2D);
+  static void drawCircle(const glm::vec2& origin, const double radius, const double border);
+  static void drawEllipse(const glm::vec2& origin, const double radiusx, const double radiusy,const double border);
   static void drawGUI();
   static uint addWidget(Widget* widget){widgetList.push_back(widget);return widgetList.size()-1;}
   static Widget* getWidget(uint id){return widgetList[id];}

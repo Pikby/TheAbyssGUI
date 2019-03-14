@@ -3,6 +3,7 @@
 #include <list>
 #include <iostream>
 #include <vector>
+#include <functional>
 
 class Widget
 {
@@ -11,7 +12,7 @@ protected:
   bool focused;
   glm::vec2 origin;
   glm::vec2 dimensions;
-  double padding;
+  double padding = 0.01;
   double size;
 public:
   Widget(){}
@@ -32,6 +33,7 @@ public:
   virtual void handleCharInput(uint character){}
   virtual void handleScrollInput(double xoffset,double yoffset){}
   virtual void handleMouseHover(const glm::vec2& mousePos){};
+  virtual void handleMouseInput(int button,int action){};
 };
 
 
@@ -46,14 +48,24 @@ public:
   StaticLabel(){};
   StaticLabel(const std::string& text,const glm::vec2& Origin,double CharacterScale);
   ~StaticLabel();
-  void draw();
+
+  void draw() override;
 };
 
 class Button : public Widget
 {
 private:
+  glm::vec2 textOrigin;
+  double textScale;
+  double pressedTime;
   std::string text;
+  std::function<void(int)> clickHandler;
+public:
+  Button(const glm::vec2& Origin, const glm::vec2& Dimensions,const std::string& Text,std::function<void(int)> ClickHandler = std::function<void(int)>(NULL));
+  ~Button(){};
 
+  void draw() override;
+  void handleMouseInput(int button, int action) override;
 
 };
 
@@ -68,15 +80,16 @@ private:
   std::list<std::string>::iterator focusTarget;
 public:
   ChatBox(glm::vec2 origin,glm::vec2 dimensions,double size);
-  void draw();
+
   std::string getInputLine(){return currentLine;}
   void extendFor(double seconds);
   void updateInputLine(std::string line){currentLine = line;}
   void addLineToHistory(std::string line);
-  void handleCharInput(uint character);
-  void handleKeyInput(int key,int action);
-  void handleScrollInput(double xoffset,double yoffset);
 
+  void handleCharInput(uint character) override;
+  void handleKeyInput(int key,int action) override;
+  void handleScrollInput(double xoffset,double yoffset) override;
+  void draw() override;
 };
 
 enum CellType{SQUAREIMAGECELL,ROUNDIMAGECELL,TEXTIMAGECELL};
@@ -93,8 +106,10 @@ private:
   uint getCellTexture(int x,int y){return textureArray[x+y*columns];}
 public:
  ImageGrid(glm::vec2 Origin,int Rows, int Cols,glm::vec2 CellDimensions, glm::vec2 CellOffset);
-  void draw();
+
   void setImage(int id,uint texture){textureArray[id] = texture;}
   void handleMouseHover(const glm::vec2& mousePos);
-  bool isIn(const glm::vec2 pos);
+
+  bool isIn(const glm::vec2 pos) override;
+  void draw() override;
 };

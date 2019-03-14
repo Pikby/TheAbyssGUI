@@ -21,7 +21,7 @@ void ChatBox::draw()
   bool extended = curTime < extendTime;
 
 
-  glm::vec2 offset = glm::vec2(0.0f,(12.0f/GUI::dimensions.y)*characterScale);
+  glm::vec2 offset = glm::vec2(0.0f,(64.0f/GUI::dimensions.y)*characterScale);
 
 
   int numbOfMainLines = ceil((dimensions.y/offset.y));

@@ -52,7 +52,7 @@ void GUI::initGUI(const glm::ivec2 Dimensions)
 void GUI::drawGUI()
 {
   //textRenderer.GUIShaderText.use();
-  for(auto itr = widgetList.begin();itr!=widgetList.end();itr++)
+  for(auto itr = viewableList.begin(); itr!= viewableList.end();itr++)
   {
     (*itr)->draw();
   }
@@ -64,11 +64,11 @@ void GUI::freeGUI()
   {
     delete *itr;
   }
-  widgetList.empty();
+  widgetList.clear();
 }
 
 
-glm::mat3 GUI::calculateQuadModel(const glm::vec2 botLeft, const glm::vec2 topRight)
+glm::mat3 GUI::calculateQuadModel(const glm::vec2& botLeft, const glm::vec2& topRight)
 {
   float x2 = botLeft.x;
   float x1 = topRight.x;
@@ -120,39 +120,41 @@ void GUI::initQuadVAO()
 }
 
 
-void GUI::drawQuad(const glm::mat3& model,const glm::vec4 color, Shader* shader)
+
+void GUI::drawQuad(const glm::mat3& model,const glm::vec4 &color, QuadDrawType type, Shader* shader)
 {
-
-
   shader->use();
   shader->setMat3("model",model);
   shader->setVec4("color",color);
+  shader->setInt("quadStyle",type);
   glBindVertexArray(quadVAO);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   glBindVertexArray(0);
 }
 
 
-void GUI::drawQuad(glm::vec2 botLeft,glm::vec2 topRight,glm::vec4 color,Shader* shader)
+void GUI::drawQuad(const glm::vec2 &botLeft,const glm::vec2 &topRight,const glm::vec4& color, QuadDrawType type, Shader* shader)
 {
   glm::mat3 model = calculateQuadModel(botLeft,topRight);
   shader->use();
   shader->setMat3("model",model);
   shader->setVec4("color",color);
+  shader->setInt("quadStyle",type);
   glBindVertexArray(quadVAO);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   glBindVertexArray(0);
 }
 
-void GUI::drawQuad(const glm::vec2 p1, const glm::vec2 p2, const glm::vec2 p3 ,const glm::vec2 p4,Shader* shader)
+void GUI::drawQuad(const glm::vec2 &p1, const glm::vec2 &p2, const glm::vec2 &p3 ,const glm::vec2 &p4, QuadDrawType type, Shader* shader)
 {
+  shader->setInt("quadStyle",type);
   drawTriangle(p1,p2,p3,shader);
   drawTriangle(p1,p3,p4,shader);
 }
 
 
 
-void GUI::drawTriangle(const glm::vec2 p1,const glm::vec2 p2, const glm::vec2 p3,Shader* shader)
+void GUI::drawTriangle(const glm::vec2& p1,const glm::vec2& p2, const glm::vec2& p3,Shader* shader)
 {
   static uint triVAO,triVBO;
   const glm::vec2 src1(-1,-1);
@@ -200,21 +202,21 @@ void GUI::drawTriangle(const glm::vec2 p1,const glm::vec2 p2, const glm::vec2 p3
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
   glBindVertexArray(0);
 }
-void GUI::drawImage(const glm::vec2 botLeft, const glm::vec2 topRight, const uint id)
+void GUI::drawImage(const glm::vec2& botLeft, const glm::vec2& topRight, const uint id)
 {
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D,id);
-  drawQuad(botLeft,topRight,glm::vec4(1),&GUIShaderImage);
+  drawQuad(botLeft,topRight,glm::vec4(1),DEFAULTQUAD,&GUIShaderImage);
 }
 
 void GUI::drawImage(const glm::mat3& model, const uint id)
 {
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D,id);
-  drawQuad(model,glm::vec4(1),&GUIShaderImage);
+  drawQuad(model,glm::vec4(1),DEFAULTQUAD,&GUIShaderImage);
 }
 
-void GUI::drawCircle(const glm::vec2 origin, const double radius, const double border)
+void GUI::drawCircle(const glm::vec2& origin, const double radius, const double border)
 {
   float radius_squared = pow(radius,4);
   float max_distance = pow(border+radius,2);
@@ -228,37 +230,12 @@ void GUI::drawCircle(const glm::vec2 origin, const double radius, const double b
   shader->setFloat("border_float",borderFloat);
   glm::vec2 upper = origin + glm::vec2(radius+border);
   glm::vec2 lower = origin - glm::vec2(radius+border);
-  drawQuad(lower,upper,glm::vec4(1),shader);
+  drawQuad(lower,upper,glm::vec4(1),DEFAULTQUAD,shader);
 
 }
 
 void GUI::GLFWKeyCallBack(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
-  static float gamma = 0.2;
-  static float buffer = 0.9;
-  if(key == GLFW_KEY_UP)
-  {
-    gamma += 0.001;
-    textRenderer.updateTextGamma(gamma);
-  }
-  if(key == GLFW_KEY_DOWN)
-  {
-    gamma -= 0.001;
-    textRenderer.updateTextGamma(gamma);
-  }
-  if(key == GLFW_KEY_LEFT)
-  {
-    buffer += 0.001;
-    textRenderer.updateTextBuffer(buffer);
-  }
-  if(key == GLFW_KEY_RIGHT)
-  {
-    buffer -= 0.001;
-    textRenderer.updateTextBuffer(buffer);
-  }
-
-
-  std::cout << buffer << ":" << gamma << "\n";
   if(focusTarget == NULL) return;
   focusTarget->handleKeyInput(key,action);
 }
@@ -295,6 +272,8 @@ void GUI::GLFWMouseButtonCallback(GLFWwindow* window, int button,int action, int
     Widget* widget = (*itr);
     if(widget->isIn(mousePos))
     {
+
+      widget->handleMouseInput(button,action);
       if(widget->isFocusable())
       {
         if(focusTarget != NULL)
