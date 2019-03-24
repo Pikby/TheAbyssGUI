@@ -6,9 +6,10 @@
 
 #define GLSLSHADERSIMPLEMNTATION
 #include "shaders.h"
-
 #define GUILIBRARYIMPLEMENTATION
 #include "gui.h"
+#include "menus.h"
+
 #include "Widgets/widgets.h"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
@@ -33,13 +34,8 @@ void GUI::initGUI(const glm::ivec2 Dimensions)
   GUIShaderImage.setMat4("projection",projection);
   GUIShaderImage.setInt("text",0);
 
-
-
   GUIShader2D.use();
   GUIShader2D.setMat4("projection",projection);
-
-
-
 
   GUIShaderCircle.use();
   GUIShaderCircle.setMat4("projection",projection);
@@ -51,20 +47,12 @@ void GUI::initGUI(const glm::ivec2 Dimensions)
 
 void GUI::drawGUI()
 {
-  //textRenderer.GUIShaderText.use();
-  for(auto itr = viewableList.begin(); itr!= viewableList.end();itr++)
-  {
-    (*itr)->draw();
-  }
+  if(currentMenu == NULL) return;
+  currentMenu->drawGUI();
 }
 
 void GUI::freeGUI()
 {
-  for(auto itr = widgetList.begin();itr!=widgetList.end();itr++)
-  {
-    delete *itr;
-  }
-  widgetList.clear();
 }
 
 
@@ -231,85 +219,38 @@ void GUI::drawCircle(const glm::vec2& origin, const double radius, const double 
   glm::vec2 upper = origin + glm::vec2(radius+border);
   glm::vec2 lower = origin - glm::vec2(radius+border);
   drawQuad(lower,upper,glm::vec4(1),DEFAULTQUAD,shader);
-
 }
 
 void GUI::GLFWKeyCallBack(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
-  if(focusTarget == NULL) return;
-  focusTarget->handleKeyInput(key,action);
+  if(currentMenu == NULL) return;
+  currentMenu->GLFWKeyCallBack(window,key,scancode,action,mode);
 }
 
 void GUI::GLFWCharCallBack(GLFWwindow* window, uint character)
 {
-  if(focusTarget == NULL) return;
-  focusTarget->handleCharInput(character);
+  if(currentMenu == NULL) return;
+  currentMenu->GLFWCharCallBack(window,character);
 }
 
 void GUI::GLFWCursorCallback(GLFWwindow* window, double xpos, double ypos)
 {
   mousePos = glm::vec2(xpos/dimensions.x,1-ypos/dimensions.y);
-
-
 }
 void GUI::handleMouseHover()
 {
-  for(auto itr = viewableList.begin();itr != viewableList.end();itr++)
-  {
-    Widget* widget = (*itr);
-    if(widget->isIn(mousePos))
-    {
-      widget->handleMouseHover(mousePos);
-    }
-  }
+  if(currentMenu == NULL) return;
+  currentMenu->handleMouseHover(mousePos);
 }
-
 
 void GUI::GLFWMouseButtonCallback(GLFWwindow* window, int button,int action, int mods)
 {
-  for(auto itr = viewableList.begin();itr != viewableList.end();itr++)
-  {
-    Widget* widget = (*itr);
-    if(widget->isIn(mousePos))
-    {
-
-      widget->handleMouseInput(button,action);
-      if(widget->isFocusable())
-      {
-        if(focusTarget != NULL)
-        {
-          focusTarget->setFocused(false);
-        }
-        focusTarget = widget;
-        widget->setFocused(true);
-      }
-    }
-  }
+  if(currentMenu == NULL) return;
+  currentMenu->GLFWMouseButtonCallback(window,button,action,mods);
 }
 
 void GUI::GLFWScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
-  if(focusTarget == NULL) return;
-  focusTarget->handleScrollInput(xoffset,yoffset);
+  if(currentMenu == NULL) return;
+  currentMenu->GLFWScrollCallback(window,xoffset,yoffset);
 }
-
-
-/*
-void GUI::drawEllipse(const glm::vec2 origin, const double radiusx, const double radiusy)
-{
-  float radius_squared = radius*radius;
-  float max_distance = pow(border+radius,2);
-  float fall_off_distance = border*border;
-  float borderFloat = sqrt(pow(radius+border,2)/radius_squared);
-  //std::cout << "borderFloat:  " << borderFloat <<"\n";
-
-  Shader* shader = &GUIShaderCircle;
-  shader->setVec2("origin",origin);
-  shader->setVec2("radius_squared",glm::vec2(radius_squared));
-  shader->setFloat("border_float",borderFloat);
-  //shader->setFloat("max_distance",max_distance);
-  glm::vec2 upper = origin + glm::vec2(radius+border);
-  glm::vec2 lower = origin - glm::vec2(radius+border);
-  drawQuad(lower,upper,shader);
-}
-*/

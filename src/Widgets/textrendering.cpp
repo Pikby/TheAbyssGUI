@@ -14,6 +14,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/matrix_transform_2d.hpp>
 // FreeType
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -261,30 +263,46 @@ void TextRenderer::init()
 
 }
 
-void TextRenderer::renderText(std::string text, glm::vec2 screenPos, GLfloat scale, glm::vec4 color)
+void TextRenderer::renderText(const std::string &text,const glm::vec2 &screenPos, float scale,const glm::vec4 &color,const glm::mat3& rot,TextAlignment alignment)
 {
-  glm:: vec2 pos = screenPos*glm::vec2(GUI::dimensions);
-  std::string::const_iterator c;
+  glm::vec3 resPos = glm::vec3(screenPos*glm::vec2(GUI::dimensions),1);
+  uint8_t r = (int)(color.r*255);
+  uint8_t g = (int)(color.g*255);
+  uint8_t b = (int)(color.b*255);
+  uint8_t a = (int)(color.a*255);
+  uint32_t packedColor = r | (g << 8) | (b << 16) | (a << 24);
 
-  unsigned char r = (int)(color.r*255);
-  unsigned char g = (int)(color.g*255);
-  unsigned char b = (int)(color.b*255);
-  unsigned char a = (int)(color.a*255);
+	float xAlignment;
+	switch(alignment)
+	{
+		case(TEXTALILEFT):
+			xAlignment = 0;
+			break;
+		case(TEXTALIRIGHT):
+			xAlignment = calculateStringDimensions(text,scale).x;
+			break;
+		case(TEXTALICENTER):
+			xAlignment = calculateStringDimensions(text,scale).x/2;
+			break;
+	}
 
-
-  int packedColor = r | (g << 8) | (b << 16) | (a << 24);
-
-
-  for (c = text.begin(); c != text.end(); c++)
+  for(auto c = text.begin(); c != text.end(); c++)
   {
-      //GUIShaderText.setInt("currentCharacter",*c);
       Character ch = characters[*c];
-
-      float xpos = pos.x + ch.bearing.x * scale;
-      float ypos = pos.y - (ch.size.y - ch.bearing.y) * scale;
-
+      float xpos = resPos.x + ch.bearing.x * scale;
+      float ypos = resPos.y - (ch.size.y - ch.bearing.y) * scale;
       float w = ch.size.x * scale;
       float h = ch.size.y * scale;
+
+
+
+			glm::vec3 pos = glm::vec3(ch.bearing.x * scale,-(ch.size.y - ch.bearing.y) * scale,1) - glm::vec3(xAlignment,0,0);
+			glm::vec3 offset = glm::vec3(w,h,1);
+
+			glm::vec2 bl = resPos + glm::vec3(pos.x,pos.y,1)*rot;
+			glm::vec2 tl = resPos + glm::vec3(pos.x,pos.y+offset.y,1)*rot;
+			glm::vec2 tr = resPos + glm::vec3(pos.x+offset.x,pos.y+offset.y,1)*rot;
+			glm::vec2 br = resPos + glm::vec3(pos.x+offset.x,pos.y,1)*rot;
 
       auto toFloat = [](int a)
       {
@@ -293,25 +311,29 @@ void TextRenderer::renderText(std::string text, glm::vec2 screenPos, GLfloat sca
 
 			uint8_t byteScale = round(log2(scale))+128;
 			uint32_t package = ((*c) << 8) | (byteScale << 18);
-
+			float floatColor = toFloat(packedColor);
       CharacterVertex vert =
       {
-        glm::vec4(xpos, ypos+h,   toFloat(00 | package) ,toFloat(packedColor)),
-        glm::vec4(xpos, ypos,     toFloat(01 | package) ,toFloat(packedColor)),
-        glm::vec4(xpos+w,ypos,    toFloat(11 | package) ,toFloat(packedColor)),
+        glm::vec4(bl,toFloat(01 | package),floatColor),
+				glm::vec4(tl,toFloat(00 | package),floatColor),
+        glm::vec4(br,toFloat(11 | package),floatColor),
 
-        glm::vec4(xpos, ypos+h,   toFloat(00 | package),toFloat(packedColor)),
-        glm::vec4(xpos+w,ypos,    toFloat(11 | package),toFloat(packedColor)),
-        glm::vec4(xpos+w,ypos+h , toFloat(10 | package),toFloat(packedColor)),
+        glm::vec4(tl,toFloat(00 | package),floatColor),
+        glm::vec4(br,toFloat(11 | package),floatColor),
+        glm::vec4(tr,toFloat(10 | package),floatColor),
       };
       characterVertices.push_back(vert);
-      pos.x += (ch.advance >> 6) * scale; // Bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
+
+
+			glm::vec3 advance = glm::vec3((ch.advance >> 6) * scale,0,1)*rot;
+
+      resPos.x += advance.x; // Bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
+			resPos.y += advance.y;
   }
 }
 
 void TextRenderer::drawAllText()
 {
-
    glActiveTexture(GL_TEXTURE0);
    glBindTexture(GL_TEXTURE_2D,textAtlas);
    glBindVertexArray(VAO);
@@ -319,10 +341,6 @@ void TextRenderer::drawAllText()
    glBufferData(GL_ARRAY_BUFFER,characterVertices.size()*6*4*sizeof(float),&(characterVertices.front()), GL_DYNAMIC_DRAW);
    glVertexAttribPointer(0,4,GL_FLOAT, GL_FALSE,4*sizeof(float), (void*)0);
    glEnableVertexAttribArray(0);
-
-
-
-
 
    glViewport(0,0,GUI::dimensions.x,GUI::dimensions.y);
    GUIShaderText.use();
@@ -355,15 +373,4 @@ glm::vec3 TextRenderer::calculateStringDimensions(const std::string& line,double
     maxY = std::max(maxY,ypos+c.size.y * scale);
   }
   return glm::vec3(horizontalLength,offY,maxY);
-}
-
-void TextRenderer::updateTextBuffer(float newBuf)
-{
-  textBuffer = newBuf;
-  GUIShaderText.setFloat("buf",textBuffer);
-}
-void TextRenderer::updateTextGamma(float newGamma)
-{
-  textGamma = newGamma;
-  GUIShaderText.setFloat("gamma",textGamma);
 }

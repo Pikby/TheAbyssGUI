@@ -8,27 +8,23 @@
 #include <GLFW/glfw3.h>
 #include "Widgets/textrenderer.h"
 class Shader;
-
-
 class Widget;
-
+class Menu;
 enum QuadDrawType {DEFAULTQUAD = 0,ROUNDEDQUAD = 1,INVERTEDQUAD = 2, CIRCLEQUAD = 3};
 
 class GUI
 {
 private:
   static glm::vec2 mousePos;
-  static Widget* focusTarget;
-  static std::vector<Widget*> widgetList;
-  static std::list<Widget*> viewableList;
+  static Menu* currentMenu;
   static Shader GUIShader2D,GUIShaderCircle,GUIShaderImage;
 
 public:
+  static void setMenu(Menu* newMenu){currentMenu = newMenu;}
+  static glm::vec2 getMousePos(){return mousePos;}
   static TextRenderer textRenderer;
-  static void removeFromViewableList(std::list<Widget*>::iterator itr){viewableList.erase(itr);}
-  static std::list<Widget*>::iterator addToViewableList(Widget* widget){viewableList.push_back(widget); return (--viewableList.end());}
   static glm::ivec2 dimensions;
-  static void renderText(std::string text, glm::vec2 pos, float scale=1, glm::vec4 color=glm::vec4(1)){textRenderer.renderText(text,pos,scale,color);}
+  static void renderText(std::string text, glm::vec2 pos, float scale=1, glm::vec4 color=glm::vec4(1),glm::mat3 rot = glm::mat3(1),TextAlignment alignment = TEXTALILEFT){textRenderer.renderText(text,pos,scale,color,rot,alignment);}
   static glm::vec3 calculateStringDimensions(const std::string &line, double scale){return textRenderer.calculateStringDimensions(line,scale);}
   static void initGUI(const glm::ivec2 Dimensions);
   static void freeGUI();
@@ -47,8 +43,6 @@ public:
   static void drawCircle(const glm::vec2& origin, const double radius, const double border);
   static void drawEllipse(const glm::vec2& origin, const double radiusx, const double radiusy,const double border);
   static void drawGUI();
-  static uint addWidget(Widget* widget){widgetList.push_back(widget);return widgetList.size()-1;}
-  static Widget* getWidget(uint id){return widgetList[id];}
   static void GLFWKeyCallBack(GLFWwindow* window, int key, int scancode, int action, int mode);
   static void GLFWCharCallBack(GLFWwindow* window, uint character);
   static void GLFWCursorCallback(GLFWwindow* window, double xpos, double ypos);
@@ -60,11 +54,8 @@ public:
 #ifdef GUILIBRARYIMPLEMENTATION
 glm::vec2 GUI::mousePos;
 glm::ivec2 GUI::dimensions;
+Menu* GUI::currentMenu = NULL;
 Shader GUI::GUIShader2D,GUI::GUIShaderCircle,GUI::GUIShaderImage;
-
-std::list<Widget*> GUI::viewableList;
-Widget* GUI::focusTarget;
-std::vector<Widget*> GUI::widgetList;
 TextRenderer GUI::textRenderer;
 #endif
 

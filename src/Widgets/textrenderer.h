@@ -47,6 +47,9 @@ struct Grid
   }
 };
 
+
+enum TextAlignment{TEXTALILEFT,TEXTALIRIGHT,TEXTALICENTER};
+
 class TextRenderer
 {
 private:
@@ -69,9 +72,7 @@ public:
   Shader GUIShaderText;
   void init();
   void drawAllText();
-  void updateTextBuffer(float newBuf);
-  void updateTextGamma(float newGamma);
   void loadTextAtlas(const FT_Face &face, int fontSize);
-  void renderText(std::string text, glm::vec2 screenPos, GLfloat scale, glm::vec4 color);
+  void renderText(const std::string &text,const glm::vec2 &screenPos, float scale, const glm::vec4 &color,const glm::mat3 &rot = glm::mat3(1),TextAlignment alignment = TEXTALILEFT);
   glm::vec3 calculateStringDimensions(const std::string& line,double scale);
 };

@@ -4,10 +4,11 @@
 
 #define FREETYPE_GL_USE_VAO
 #define GLM_ENABLE_EXPERIMENTAL
-
+#include <glm/gtx/matrix_transform_2d.hpp>
 #include <glm/gtx/transform.hpp>
 #include "gui.h"
 #include "Widgets/widgets.h"
+#include "menus.h"
 void GLAPIENTRY MessageCallback( GLenum source,
                  GLenum type,
                  GLuint id,
@@ -57,7 +58,7 @@ int main()
 	//glEnable(GL_BLEND);
 	//glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
-
+  /*
 	ChatBox* chatBox = new ChatBox(glm::vec2(0.1,0.1),glm::vec2(0.2,0.2),12.0/64.0);
 	ChatBox* chatBox2 = new ChatBox(glm::vec2(0.6,0.1),glm::vec2(0.2,0.2),1);
 	chatBox->addLineToHistory("Line1");
@@ -102,7 +103,27 @@ int main()
   {
     //labelArr[i] = StaticLabel("Static Drawing Test",glm::vec2((rand() %1000)/1000.f,(rand() %1000)/1000.f),1);
   }
+  */
+  Menu mainMenu;
+  Menu subMenu;
+  GUI::setMenu(&mainMenu);
+  ChatBox* chatBox = new ChatBox(glm::vec2(0.1,0.1),glm::vec2(0.2,0.2),12.0/64.0);
+  Label* label1 = new Label("MainMenu",glm::vec2(0.8,0.8),0.5);
+  mainMenu.addWidget(chatBox);
+  mainMenu.addWidget(label1);
 
+  Button* button1 =  new Button(glm::vec2(0.5),glm::vec2(0.1),"Main Menu Button",[&](int a)
+  {
+    GUI::setMenu(&subMenu);
+  });
+  mainMenu.addWidget(button1);
+  Label* label2 = new Label("SubMenu",glm::vec2(0.8,0.8),0.5);
+  subMenu.addWidget(label2);
+  Button* button2 =  new Button(glm::vec2(0.5),glm::vec2(0.1),"Sub Menu Button",[&](int a)
+  {
+    GUI::setMenu(&mainMenu);
+  });
+  subMenu.addWidget(button2);
 
 	while(!glfwWindowShouldClose(window))
 	{
@@ -122,6 +143,10 @@ int main()
     }
 
 
+    static float angle = 0;
+    angle+= 0.0001;
+    glm::mat3 rot = glm::rotate(glm::mat3(1.0f),angle);
+    GUI::renderText("Rotating text",glm::vec2(0.5,0.3),12.0/64.0,glm::vec4(1),rot,TEXTALICENTER);
     const double vals[] = {0.1,0.1,0.2,0.3,0.4,0.5,1.0,2.0,3.0,4.0};
     for(int i=0;i<10;+i++)
     {

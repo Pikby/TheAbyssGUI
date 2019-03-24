@@ -37,17 +37,15 @@ public:
 };
 
 
-class StaticLabel : public Widget
+class Label : public Widget
 {
 private:
   std::string label;
-  uint FBO=0,textureID=0;
   double characterScale;
-  glm::mat4 model;
 public:
-  StaticLabel(){};
-  StaticLabel(const std::string& text,const glm::vec2& Origin,double CharacterScale);
-  ~StaticLabel();
+  Label(){};
+  Label(const std::string& text,const glm::vec2& Origin,double CharacterScale);
+
 
   void draw() override;
 };
