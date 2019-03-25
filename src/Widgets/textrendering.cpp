@@ -119,10 +119,10 @@ void TextRenderer::loadTextAtlas(const FT_Face &face, int fontSize)
     if(FT_Load_Char(face, i, FT_LOAD_RENDER)) continue;
     glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, face->glyph->bitmap.width, face->glyph->bitmap.rows, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
 
-		int padding = glyphSize/3;
+		padding = glyphSize/3;
     Character character =
     {
-      glm::vec2(face->glyph->bitmap.width+padding, face->glyph->bitmap.rows+padding),
+      glm::vec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
       glm::vec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
       (unsigned int)face->glyph->advance.x,(x-padding/2)/atlasDimensions.x,(y-padding/2)/atlasDimensions.y
 
@@ -135,7 +135,7 @@ void TextRenderer::loadTextAtlas(const FT_Face &face, int fontSize)
 		}
 
     characters.insert(std::pair<char, Character>(i, character));
-    GUIShaderText.setVec2("characters[" + std::to_string(i) + "].size",character.size/atlasDimensions);
+    GUIShaderText.setVec2("characters[" + std::to_string(i) + "].size",(character.size+glm::vec2(padding))/atlasDimensions);
     GUIShaderText.setVec2("characters[" + std::to_string(i) + "].bearing",character.bearing/atlasDimensions);
     GUIShaderText.setUInt("characters[" + std::to_string(i) + "].advance",character.advance);
     GUIShaderText.setFloat("characters[" + std::to_string(i) + "].xstart",character.xstart);
@@ -263,7 +263,7 @@ void TextRenderer::init()
 
 }
 
-void TextRenderer::renderText(const std::string &text,const glm::vec2 &screenPos, float scale,const glm::vec4 &color,const glm::mat3& rot,TextAlignment alignment)
+void TextRenderer::renderText(const std::string &text,const glm::vec2 &screenPos, float scale,const glm::vec4 &color,const glm::mat3& rot,TextAlignment alignment,int cursorPosition)
 {
   glm::vec3 resPos = glm::vec3(screenPos*glm::vec2(GUI::dimensions),1);
   uint8_t r = (int)(color.r*255);
@@ -286,17 +286,17 @@ void TextRenderer::renderText(const std::string &text,const glm::vec2 &screenPos
 			break;
 	}
 
+	int characterCount = 0;
   for(auto c = text.begin(); c != text.end(); c++)
   {
       Character ch = characters[*c];
-      float xpos = resPos.x + ch.bearing.x * scale;
-      float ypos = resPos.y - (ch.size.y - ch.bearing.y) * scale;
-      float w = ch.size.x * scale;
-      float h = ch.size.y * scale;
 
+      float w = (ch.size.x+padding) * scale;
+      float h = (ch.size.y+padding) * scale;
 
+			glm::vec3 pos = glm::vec3(ch.bearing.x * scale,-(ch.size.y+padding - ch.bearing.y) * scale,1) - glm::vec3(xAlignment,0,0);
+			glm::vec3 cursorPos = glm::vec3(ch.bearing.x * scale,-(ch.size.y - ch.bearing.y) * scale,1) - glm::vec3(xAlignment,0,0);
 
-			glm::vec3 pos = glm::vec3(ch.bearing.x * scale,-(ch.size.y - ch.bearing.y) * scale,1) - glm::vec3(xAlignment,0,0);
 			glm::vec3 offset = glm::vec3(w,h,1);
 
 			glm::vec2 bl = resPos + glm::vec3(pos.x,pos.y,1)*rot;
@@ -324,11 +324,20 @@ void TextRenderer::renderText(const std::string &text,const glm::vec2 &screenPos
       };
       characterVertices.push_back(vert);
 
-
+			if(characterCount == cursorPosition)
+			{
+				glm::vec2 quadPos = glm::vec2(resPos+pos+glm::vec3(padding/4)*scale);
+				quadPos = quadPos/(glm::vec2)GUI::dimensions;
+				GUI::setQuadDepth(-1.0);
+					GUI::drawQuad(quadPos,quadPos+glm::vec2(0.001,scale*(64.0f/GUI::dimensions.y)),glm::vec4(0,0,0,1));
+				GUI::setQuadDepth(0.0);
+			}
 			glm::vec3 advance = glm::vec3((ch.advance >> 6) * scale,0,1)*rot;
 
       resPos.x += advance.x; // Bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
 			resPos.y += advance.y;
+
+			characterCount++;
   }
 }
 
@@ -346,10 +355,11 @@ void TextRenderer::drawAllText()
    GUIShaderText.use();
    glm::mat4 projection = glm::ortho(0.0f, (float)GUI::dimensions.x, 0.0f,  (float)GUI::dimensions.y);
    GUIShaderText.setMat4("projection",projection);
-
+	 glDepthMask(GL_FALSE);
    glDrawArrays(GL_TRIANGLES, 0, characterVertices.size()*6);
    glBindBuffer(GL_ARRAY_BUFFER, 0);
    glBindVertexArray(0);
+	 glDepthMask(GL_TRUE);
    characterVertices.clear();
 
    static int lastSize = 10;

@@ -4,6 +4,14 @@
 #include "gui.h"
 #include "Widgets/widgets.h"
 
+Menu::~Menu()
+{
+  for(auto itr = viewableList.begin(); itr!= viewableList.end();itr++)
+  {
+    delete *itr;
+  }
+}
+
 void Menu::GLFWKeyCallBack(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
   if(focusTarget == NULL) return;
@@ -58,13 +66,6 @@ void Menu::drawGUI()
   }
 }
 
-Menu::~Menu()
-{
-  for(auto itr = viewableList.begin(); itr!= viewableList.end();itr++)
-  {
-    delete *itr;
-  }
-}
 
 void Menu::GLFWScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {

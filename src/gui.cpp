@@ -27,7 +27,6 @@ void GUI::initGUI(const glm::ivec2 Dimensions)
 
   Shader::setShaderDirectory("../src/shaders/");
   GUIShader2D = Shader("guiShader2D.vs","guiShader2D.fs");
-  GUIShaderCircle = Shader("guiCircleShader.vs","guiCircleShader.fs");
   GUIShaderImage = Shader("guiImageShader.vs","guiImageShader.fs");
 
   GUIShaderImage.use();
@@ -36,9 +35,8 @@ void GUI::initGUI(const glm::ivec2 Dimensions)
 
   GUIShader2D.use();
   GUIShader2D.setMat4("projection",projection);
+  GUIShader2D.setFloat("depth",0);
 
-  GUIShaderCircle.use();
-  GUIShaderCircle.setMat4("projection",projection);
 
   initQuadVAO();
   textRenderer.init();
@@ -118,6 +116,11 @@ void GUI::drawQuad(const glm::mat3& model,const glm::vec4 &color, QuadDrawType t
   glBindVertexArray(quadVAO);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   glBindVertexArray(0);
+}
+
+void GUI::setQuadDepth(float newDepth)
+{
+  GUIShader2D.setFloat("depth",newDepth);
 }
 
 
@@ -204,22 +207,6 @@ void GUI::drawImage(const glm::mat3& model, const uint id)
   drawQuad(model,glm::vec4(1),DEFAULTQUAD,&GUIShaderImage);
 }
 
-void GUI::drawCircle(const glm::vec2& origin, const double radius, const double border)
-{
-  float radius_squared = pow(radius,4);
-  float max_distance = pow(border+radius,2);
-  float fall_off_distance = border*border;
-  float borderFloat = sqrt(pow(radius+border,2)/radius_squared);
-
-  Shader* shader = &GUIShaderCircle;
-  shader->setVec2("origin",origin);
-  shader->setVec2("radius_squared",glm::vec2(radius_squared));
-  shader->setVec2("max_distance",glm::vec2(max_distance));
-  shader->setFloat("border_float",borderFloat);
-  glm::vec2 upper = origin + glm::vec2(radius+border);
-  glm::vec2 lower = origin - glm::vec2(radius+border);
-  drawQuad(lower,upper,glm::vec4(1),DEFAULTQUAD,shader);
-}
 
 void GUI::GLFWKeyCallBack(GLFWwindow* window, int key, int scancode, int action, int mode)
 {

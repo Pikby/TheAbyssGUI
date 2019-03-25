@@ -46,14 +46,17 @@ int main()
 	glfwSetMouseButtonCallback(window, GUI::GLFWMouseButtonCallback);
 	glfwSetScrollCallback(window, GUI::GLFWScrollCallback);
 
+
+
   glfwMakeContextCurrent(window);
+
   glfwSwapInterval(0);
 	glewExperimental = GL_TRUE;
  	glewInit();
   glEnable              ( GL_DEBUG_OUTPUT );
   glDebugMessageCallback( MessageCallback, 0 );
 	//glViewport(0, 0, winWidth, winHeight);
-
+  glEnable(GL_DEPTH_TEST);
 	GUI::initGUI(glm::vec2(winWidth,winHeight));
 	//glEnable(GL_BLEND);
 	//glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
@@ -124,6 +127,11 @@ int main()
     GUI::setMenu(&mainMenu);
   });
   subMenu.addWidget(button2);
+  EditBox* editBox = new EditBox("Enter text",glm::vec2(0.7),glm::vec2(0.1),12.0/64.0);
+  subMenu.addWidget(editBox);
+
+  EditBox* editBox2 = new EditBox("Enter text",glm::vec2(0.3,0.3),glm::vec2(0.1),12.0/64.0);
+  subMenu.addWidget(editBox2);
 
 	while(!glfwWindowShouldClose(window))
 	{
@@ -157,12 +165,12 @@ int main()
 
     double end = glfwGetTime();
 
-    GUI::renderText("FPS: " + std::to_string(1.0f/(end-start)),glm::vec2(0.1,0.95),24.0/64.0,glm::vec4(glm::vec3(0),1));
+    GUI::renderText("ms: " + std::to_string((end-start)*1000),glm::vec2(0.1,0.95),24.0/64.0,glm::vec4(glm::vec3(0),1));
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,1);
 
-    GUI::drawQuad(glm::vec2(0.1,0.8),glm::vec2(0.2,0.9),glm::vec4(1),DEFAULTQUAD);
+    GUI::drawQuad(glm::vec2(0.1,0.8),glm::vec2(0.2,0.9),glm::vec4(1),OUTLINEQUAD);
     GUI::drawQuad(glm::vec2(0.3,0.8),glm::vec2(0.4,0.9),glm::vec4(1),ROUNDEDQUAD);
     GUI::drawQuad(glm::vec2(0.5,0.8),glm::vec2(0.6,0.9),glm::vec4(1),INVERTEDQUAD);
     GUI::drawQuad(glm::vec2(0.7,0.8),glm::vec2(0.8,0.9),glm::vec4(1),CIRCLEQUAD);

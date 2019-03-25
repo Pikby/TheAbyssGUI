@@ -12,6 +12,7 @@ const int DefaultStyle = 0;
 const int RoundedEdgeStyle = 1;
 const int InvertedEdgeStyle = 2;
 const int CircleStyle = 3;
+const int OutlineStyle = 4;
 void main()
 {
 
@@ -59,6 +60,18 @@ void main()
       float alpha = 1-smoothstep(radius_squared,radius_squared+0.02,len);
       fs_color = vec4(color.rgb,color.a*alpha);
     }break;
+    case(OutlineStyle):
+    {
+      const float lineSize = 0.01;
+      float alpha = 0;
+      if(vs_texCoords.x > 1-lineSize || vs_texCoords.y > 1-lineSize ||
+         vs_texCoords.x < lineSize   || vs_texCoords.y < lineSize  )
+         {
+           alpha = 1;
+         }
+    fs_color = vec4(color.rgb,color.a*alpha);
+    }break;
+
 
   }
 }

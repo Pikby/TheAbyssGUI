@@ -5,7 +5,7 @@
 #include "../gui.h"
 
 
-ChatBox::ChatBox(glm::vec2 newOrigin,glm::vec2 dimensions,double newSize) : Widget(newOrigin,dimensions),characterScale(newSize)
+ChatBox::ChatBox(const glm::vec2 &newOrigin,const glm::vec2 &dimensions,double newSize) : Widget(newOrigin,dimensions),characterScale(newSize)
 {
   padding = 0.005;
   focusable = true;
@@ -34,10 +34,11 @@ void ChatBox::draw()
   {
     linesToDraw = numbOfMainLines;
   }
-  bool a = ((int)round(curTime*2)) % 2;
-  char effect = a ? ' ' : '|';
-  if(focused) GUI::renderText(currentLine+effect,origin,characterScale,glm::vec4(1,1,1,1));
-  else GUI::renderText(currentLine,origin,characterScale,glm::vec4(1,1,1,1));
+  bool hasCursor = ((int)round(curTime*2)) % 2;
+
+  int cursor = hasCursor && focused ? cursorPosition : -1;
+  GUI::textRenderer.renderText(currentLine+' ',origin,characterScale,glm::vec4(1,1,1,1),glm::mat3(1),TEXTALILEFT,cursor);
+
 
 
 
@@ -55,7 +56,7 @@ void ChatBox::draw()
     target++;
   }
 }
-void ChatBox::addLineToHistory(std::string line)
+void ChatBox::addLineToHistory(const std::string &line)
 {
   history.push_front(line);
   focusTarget = history.begin();
@@ -67,8 +68,8 @@ void ChatBox::handleCharInput(uint character)
   extendFor(5);
   double lineSize = GUI::calculateStringDimensions(currentLine+(char)character,characterScale).x/GUI::dimensions.x;
   if(lineSize > dimensions.x ) return;
-  currentLine += char(character);
-
+  currentLine.insert(cursorPosition,(char*)&character);
+  cursorPosition++;
 
 }
 void ChatBox::extendFor(double seconds)
@@ -96,18 +97,28 @@ void ChatBox::handleKeyInput(int key, int action)
     switch(key)
     {
       case(GLFW_KEY_BACKSPACE):
-        if(currentLine.size() >0)
+        if(cursorPosition >0)
         {
-          currentLine.pop_back();
+          currentLine.erase(--cursorPosition,1);
         }
       break;
       case(GLFW_KEY_ENTER):
         addLineToHistory(currentLine);
         currentLine = "";
+        cursorPosition = 0;
       break;
       case(GLFW_KEY_UP):
         extendFor(5);
         if(focusTarget!=history.end()) focusTarget++;
+      break;
+      case(GLFW_KEY_LEFT):
+        if(cursorPosition>0) cursorPosition--;
+      break;
+      case(GLFW_KEY_RIGHT):
+        if(cursorPosition<currentLine.size()) cursorPosition++;
+      break;
+      case(GLFW_KEY_DELETE):
+        if(cursorPosition<currentLine.size()) currentLine.erase(cursorPosition,1);
       break;
       case(GLFW_KEY_DOWN):
         extendFor(5);

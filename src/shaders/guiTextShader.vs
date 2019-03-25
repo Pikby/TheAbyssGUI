@@ -26,7 +26,7 @@ void main()
   int colorPacked = floatBitsToInt(vertex.w);
 
   Character character = characters[c];
-  gl_Position =  projection*vec4(vertex.xy, 0, 1.0);
+  gl_Position =  projection*vec4(vertex.xy, -0.5, 1.0);
   float x = character.xstart + tex.x*(character.size.x);
   float y = character.ystart + tex.y*(character.size.y);
 

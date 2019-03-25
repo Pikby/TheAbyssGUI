@@ -58,6 +58,7 @@ private:
   uint atlasWidth,atlastHeight;
   float textBuffer;
   float textGamma;
+  int padding;
   glm::vec2 atlasDimensions;
   std::map<char, Character> characters;
   std::vector<CharacterVertex> characterVertices;
@@ -68,11 +69,13 @@ private:
   void put( Grid &g, int x, int y, const Point &p );
   void compare( Grid &g, Point &p, int x, int y, int offsetx, int offsety );
   void generateSDF( Grid &g );
+  void loadTextAtlas(const FT_Face &face, int fontSize);
 public:
   Shader GUIShaderText;
   void init();
   void drawAllText();
-  void loadTextAtlas(const FT_Face &face, int fontSize);
-  void renderText(const std::string &text,const glm::vec2 &screenPos, float scale, const glm::vec4 &color,const glm::mat3 &rot = glm::mat3(1),TextAlignment alignment = TEXTALILEFT);
+  void renderText(const std::string &text,const glm::vec2 &screenPos, float scale,
+                  const glm::vec4 &color,const glm::mat3 &rot = glm::mat3(1),
+                  TextAlignment alignment = TEXTALILEFT,int cursorPosition = -1);
   glm::vec3 calculateStringDimensions(const std::string& line,double scale);
 };

@@ -10,14 +10,14 @@
 class Shader;
 class Widget;
 class Menu;
-enum QuadDrawType {DEFAULTQUAD = 0,ROUNDEDQUAD = 1,INVERTEDQUAD = 2, CIRCLEQUAD = 3};
+enum QuadDrawType {DEFAULTQUAD = 0,ROUNDEDQUAD = 1,INVERTEDQUAD = 2, CIRCLEQUAD = 3, OUTLINEQUAD =4};
 
 class GUI
 {
 private:
   static glm::vec2 mousePos;
   static Menu* currentMenu;
-  static Shader GUIShader2D,GUIShaderCircle,GUIShaderImage;
+  static Shader GUIShader2D,GUIShaderImage;
 
 public:
   static void setMenu(Menu* newMenu){currentMenu = newMenu;}
@@ -30,18 +30,16 @@ public:
   static void freeGUI();
   static void initQuadVAO();
 
+  static void setQuadDepth(float newDepth);
+
   static glm::mat3 calculateQuadModel(const glm::vec2& botLeft, const glm::vec2& topRight);
   static void drawImage(const glm::vec2& botLeft, const glm::vec2& topRight, const uint id);
   static void drawImage(const glm::mat3& model, const uint id);
-
   static void drawInstancedQuads(int count);
-
   static void drawQuad(const glm::mat3&  model,const glm::vec4& color,QuadDrawType type = DEFAULTQUAD, Shader* shader = &GUIShader2D);
   static void drawQuad(const glm::vec2& botLeft,const glm::vec2& topRight,const glm::vec4& color =glm::vec4(1) ,QuadDrawType type = DEFAULTQUAD, Shader* shader = &GUIShader2D);
   static void drawQuad(const glm::vec2& p1,const glm::vec2& p2, const glm::vec2& p3, const glm::vec2& p4,QuadDrawType type = DEFAULTQUAD,Shader* shader = &GUIShader2D);
   static void drawTriangle(const glm::vec2& p1,const glm::vec2& p2,const glm::vec2& p3, Shader* shader = &GUIShader2D);
-  static void drawCircle(const glm::vec2& origin, const double radius, const double border);
-  static void drawEllipse(const glm::vec2& origin, const double radiusx, const double radiusy,const double border);
   static void drawGUI();
   static void GLFWKeyCallBack(GLFWwindow* window, int key, int scancode, int action, int mode);
   static void GLFWCharCallBack(GLFWwindow* window, uint character);
@@ -55,7 +53,7 @@ public:
 glm::vec2 GUI::mousePos;
 glm::ivec2 GUI::dimensions;
 Menu* GUI::currentMenu = NULL;
-Shader GUI::GUIShader2D,GUI::GUIShaderCircle,GUI::GUIShaderImage;
+Shader GUI::GUIShader2D,GUI::GUIShaderImage;
 TextRenderer GUI::textRenderer;
 #endif
 
