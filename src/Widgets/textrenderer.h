@@ -78,4 +78,5 @@ public:
                   const glm::vec4 &color,const glm::mat3 &rot = glm::mat3(1),
                   TextAlignment alignment = TEXTALILEFT,int cursorPosition = -1);
   glm::vec3 calculateStringDimensions(const std::string& line,double scale);
+  std::vector<std::string> splitString(const std::string& string,double scale, int viewLength);
 };

@@ -384,3 +384,27 @@ glm::vec3 TextRenderer::calculateStringDimensions(const std::string& line,double
   }
   return glm::vec3(horizontalLength,offY,maxY);
 }
+
+std::vector<std::string> TextRenderer::splitString(const std::string& string,double scale, int viewLength)
+{
+	std::vector<std::string> ret;
+	std::string currentLine = "";
+	double horizontalLength = 0;
+	for(auto itr = string.begin(); itr != string.end();itr++)
+	{
+		char curChar = *itr;
+		Character c = characters[curChar];
+		horizontalLength += (c.advance>>6) * scale;
+
+		if(horizontalLength > viewLength)
+		{
+			ret.push_back(currentLine);
+			currentLine = "";
+			horizontalLength = 0;
+		}
+		currentLine.push_back(curChar);
+
+	}
+	if(currentLine != "") ret.push_back(currentLine);
+	return ret;
+}

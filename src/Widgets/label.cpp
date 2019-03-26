@@ -60,7 +60,7 @@ void EditBox::draw()
   if(text == "")
   {
     int displayCursorPosition = hasCursor && focused ? 0 : -1;
-    GUI::textRenderer.renderText(defaultText,origin,characterScale,glm::vec4(0.5,0.5,0.5,1.0),glm::mat3(1),TEXTALILEFT,displayCursorPosition);
+    GUI::textRenderer.renderText(defaultText+ ' ',origin,characterScale,glm::vec4(0.5,0.5,0.5,1.0),glm::mat3(1),TEXTALILEFT,displayCursorPosition);
   }
   else
   {
@@ -68,39 +68,31 @@ void EditBox::draw()
     int charCount = 0;
     int totalCharCount = 2*(dimensions.x/((64.0*characterScale)/GUI::dimensions.x));
 
-
+    int positiveDir = 0;
+    int negativeDir = 1;
 
     while(GUI::textRenderer.calculateStringDimensions(displayText,characterScale).x < dimensions.x*GUI::dimensions.x)
     {
-      displayText.push_back(text[stringSize-charCount]);
+      if(stringSize > cursorPosition + charCount)
+      {
+        displayText.push_back(text[cursorPosition+positiveDir]);
+        positiveDir++;
+      }
+      else
+      {
+        displayText.insert(0,(char*)&text[cursorPosition-negativeDir],1);
+        negativeDir++;
+      }
       charCount++;
       if(stringSize < charCount) break;
-
-      if(cursorPosition < charCount)
-      {
-        displayText.pop_back();
-      }
-    }
-    std::reverse(displayText.begin(),displayText.end());
-
-    int startPos = std::max(int(text.size()-totalCharCount),0);
-    int endPos = text.size();
-    if(startPos > cursorPosition)
-    {
-      endPos = text.size() -(startPos-cursorPosition);
-      startPos = cursorPosition;
     }
 
-
-
-    displayText = text.substr(startPos,totalCharCount);
-
-    int displayCursorPosition = cursorPosition - (stringSize-displayText.size());
+    int displayCursorPosition = negativeDir-1;
     if(hasCursor && focused) GUI::textRenderer.renderText(displayText+' ',origin,characterScale,glm::vec4(1),glm::mat3(1),TEXTALILEFT,displayCursorPosition);
     else GUI::textRenderer.renderText(displayText+' ',origin,characterScale,glm::vec4(1),glm::mat3(1),TEXTALILEFT,-1);
   }
-  GUI::setQuadDepth(0.5);
-    GUI::drawQuad(origin-glm::vec2(padding/2),origin+dimensions+glm::vec2(padding/2),glm::vec4(glm::vec3(0.3),1));
+  glDepthMask(GL_FALSE);
     GUI::drawQuad(origin-glm::vec2(padding),origin+dimensions+glm::vec2(padding),glm::vec4(glm::vec3(0.5),1));
-  GUI::setQuadDepth(0.0);
+    GUI::drawQuad(origin-glm::vec2(padding/2),origin+dimensions+glm::vec2(padding/2),glm::vec4(glm::vec3(0.3),1));
+  glDepthMask(GL_TRUE);
 }

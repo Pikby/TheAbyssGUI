@@ -2,6 +2,11 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include <execinfo.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 #define FREETYPE_GL_USE_VAO
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/matrix_transform_2d.hpp>
@@ -21,6 +26,13 @@ void GLAPIENTRY MessageCallback( GLenum source,
   {
     return;
   }
+
+  void *array[10];
+  size_t size;
+
+  // get void*'s for all entries on the stack
+  size = backtrace(array, 10);
+  backtrace_symbols_fd(array, size, STDERR_FILENO);
   fprintf( stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
            ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
             type, severity, message );
@@ -157,7 +169,7 @@ int main()
     GUI::renderText("Rotating text",glm::vec2(0.5,0.3),12.0/64.0,glm::vec4(1),rot,TEXTALICENTER);
     const double vals[] = {0.1,0.1,0.2,0.3,0.4,0.5,1.0,2.0,3.0,4.0};
     for(int i=0;i<10;+i++)
-    { 
+    {
       // /GUI::renderText("The quick brown fox jumps over the lazy dog123456789"+std::to_string(vals[i]),glm::vec2(0.3,i*0.1),vals[i],glm::vec4(1));
     }
 		GUI::drawGUI();

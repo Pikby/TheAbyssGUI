@@ -1,0 +1,6 @@
+*.vs linguist-language=GLSL
+*.fs linguist-language=GLSL
+*.gs linguist-language=GLSL
+*.h linguist-language=cpp
+src/stb_image_write.h linguist-vendored=true
+src/stb_image.h linguist-vendored=true

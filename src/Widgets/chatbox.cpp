@@ -51,29 +51,16 @@ void ChatBox::draw()
     std::string originText = (*target);
 
 
-    do
+    std::vector<std::string> lines = GUI::textRenderer.splitString(originText,characterScale,dimensions.x*GUI::dimensions.x);
+    for(auto itr = lines.rbegin(); itr != lines.rend();itr++)
     {
-      int stringSize = originText.size();
-      std::string displayText = "";
-      int charCount = 0;
-      while(GUI::textRenderer.calculateStringDimensions(displayText,characterScale).x < dimensions.x*GUI::dimensions.x)
-      {
-        displayText.push_back(originText[stringSize-charCount]);
-        charCount++;
-        if(stringSize < charCount) break;
-      }
-
-      std::reverse(displayText.begin(),displayText.end());
-
+      std::string displayText = *itr;
       GUI::renderText(displayText,origin + (float)i*offset,characterScale,glm::vec4(1,1,1,alpha));
       i++;
-
-      if(originText.size() <= displayText.size()) break;
-
-
-      originText = originText.substr(0,originText.size()+1-displayText.size());
-    }while(originText.size() > 0);
+    }
     target++;
+
+
   }
 }
 void ChatBox::addLineToHistory(const std::string &line)

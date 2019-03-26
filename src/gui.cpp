@@ -37,6 +37,9 @@ void GUI::initGUI(const glm::ivec2 Dimensions)
   GUIShader2D.setMat4("projection",projection);
   GUIShader2D.setFloat("depth",0);
 
+  std::cout << "initing GUI\n";
+
+
 
   initQuadVAO();
   textRenderer.init();
