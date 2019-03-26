@@ -39,13 +39,16 @@ public:
 class EditBox : public Widget
 {
 private:
-  std::string text;
+  std::string defaultText;
+  std::string text = "";
   double characterScale;
   int cursorPosition=0;
+  std::function<void(std::string)> submitHandler = NULL;
 public:
   EditBox(){};
-  EditBox(const std::string& text,const glm::vec2& Origin,const glm::vec2& dims,double CharacterScale);
-
+  EditBox(const std::string& text,const glm::vec2& Origin,const glm::vec2& dims,double CharacterScale,std::function<void(std::string)> submitHandler = NULL);
+  std::string getText(){return text;}
+  void updateText(const std::string &str){text = str;cursorPosition=0;}
   void draw() override;
   void handleCharInput(uint character) override;
   void handleKeyInput(int key,int action) override;
@@ -69,8 +72,8 @@ private:
   glm::vec2 textOrigin;
   double textScale;
   double pressedTime;
-  std::string text;
-  std::function<void(int)> clickHandler;
+  std::string text = "";
+  std::function<void(int)> clickHandler = NULL;
 public:
   Button(const glm::vec2& Origin, const glm::vec2& Dimensions,const std::string& Text,std::function<void(int)> ClickHandler = std::function<void(int)>(NULL));
   ~Button(){};
@@ -90,6 +93,7 @@ private:
   std::string currentLine;
   std::list<std::string> history;
   std::list<std::string>::iterator focusTarget;
+  EditBox inputBox;
 public:
   ChatBox(const glm::vec2& origin,const glm::vec2& dimensions,double size);
   std::string getInputLine(){return currentLine;}
@@ -97,6 +101,7 @@ public:
   void updateInputLine(const std::string &line){currentLine = line;}
   void addLineToHistory(const std::string &line);
 
+  void setFocused(bool b){focused = b;inputBox.setFocused(b);}
   void handleCharInput(uint character) override;
   void handleKeyInput(int key,int action) override;
   void handleScrollInput(double xoffset,double yoffset) override;

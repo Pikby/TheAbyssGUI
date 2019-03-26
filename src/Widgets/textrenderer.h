@@ -3,7 +3,7 @@
 
 #include "../shaders.h"
 
-
+#define TEXTFONTSIZE 64
 struct Character {
     glm::vec2 size;    // Size of glyph
     glm::vec2 bearing;  // Offset from baseline to left/top of glyph

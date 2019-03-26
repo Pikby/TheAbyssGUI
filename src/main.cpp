@@ -127,10 +127,10 @@ int main()
     GUI::setMenu(&mainMenu);
   });
   subMenu.addWidget(button2);
-  EditBox* editBox = new EditBox("Enter text",glm::vec2(0.7),glm::vec2(0.1),12.0/64.0);
+  EditBox* editBox = new EditBox("Enter text",glm::vec2(0.7),glm::vec2(0.1,0.01),12.0/64.0);
   subMenu.addWidget(editBox);
 
-  EditBox* editBox2 = new EditBox("Enter text",glm::vec2(0.3,0.3),glm::vec2(0.1),12.0/64.0);
+  EditBox* editBox2 = new EditBox("Enter text",glm::vec2(0.3,0.3),glm::vec2(0.1,0.01),12.0/64.0);
   subMenu.addWidget(editBox2);
 
 	while(!glfwWindowShouldClose(window))
@@ -157,7 +157,7 @@ int main()
     GUI::renderText("Rotating text",glm::vec2(0.5,0.3),12.0/64.0,glm::vec4(1),rot,TEXTALICENTER);
     const double vals[] = {0.1,0.1,0.2,0.3,0.4,0.5,1.0,2.0,3.0,4.0};
     for(int i=0;i<10;+i++)
-    {
+    { 
       // /GUI::renderText("The quick brown fox jumps over the lazy dog123456789"+std::to_string(vals[i]),glm::vec2(0.3,i*0.1),vals[i],glm::vec4(1));
     }
 		GUI::drawGUI();

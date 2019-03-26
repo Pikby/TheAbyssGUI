@@ -66,9 +66,9 @@ void main()
       float alpha = 0;
       if(vs_texCoords.x > 1-lineSize || vs_texCoords.y > 1-lineSize ||
          vs_texCoords.x < lineSize   || vs_texCoords.y < lineSize  )
-         {
-           alpha = 1;
-         }
+       {
+         alpha = 1;
+       }
     fs_color = vec4(color.rgb,color.a*alpha);
     }break;
 
